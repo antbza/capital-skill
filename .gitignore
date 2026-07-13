@@ -1,0 +1,5 @@
+*.xls
+*.XLS
+*.json
+__pycache__/
+.env
