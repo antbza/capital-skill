@@ -1,0 +1,12 @@
+.git
+.github
+docs
+.env
+*.json
+*.xlsx
+*.xls
+*.XLS
+__pycache__
+*.pyc
+venv
+.venv
