@@ -1,5 +1,8 @@
 *.xls
 *.XLS
+*.xlsx
+*.XLSX
 *.json
+!alexa/interaction_model.json
 __pycache__/
 .env

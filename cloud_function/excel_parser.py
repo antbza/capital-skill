@@ -124,6 +124,8 @@ class ExcelParser:
             if not trans_date:
                 continue  # Pula se a data for inválida (pode ser uma linha de rodapé)
 
+            trans_time = self._parse_time(data_val)
+
             # Mapear lançamento
             lanc = str(row[header_mapping["lancamento"]]).strip() if "lancamento" in header_mapping and header_mapping["lancamento"] < len(row) and row[header_mapping["lancamento"]] is not None else ""
             
@@ -137,6 +139,7 @@ class ExcelParser:
 
             transactions.append({
                 "data": trans_date,
+                "hora": trans_time,
                 "lancamento": lanc,
                 "dcto": dcto,
                 "credito": credito,
@@ -158,7 +161,26 @@ class ExcelParser:
         val_str = str(val).strip()
         for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d/%m/%y", "%d-%m-%Y"):
             try:
-                return datetime.datetime.strptime(val_str, fmt).date()
+                # Divide por espaço caso venha data e hora na string
+                date_part = val_str.split(' ')[0].split('T')[0]
+                return datetime.datetime.strptime(date_part, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    def _parse_time(self, val):
+        if isinstance(val, datetime.datetime):
+            return val.time()
+        
+        val_str = str(val).strip()
+        # Se contiver apenas a data (sem espaço ou T), não tem hora
+        if " " not in val_str and "T" not in val_str:
+            return None
+            
+        for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S"):
+            try:
+                # Tenta extrair a parte de hora ou fazer o parse completo
+                return datetime.datetime.strptime(val_str, fmt).time()
             except ValueError:
                 continue
         return None

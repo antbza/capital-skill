@@ -1,0 +1,137 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "meu extrato",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "GetPixTodayIntent",
+          "slots": [],
+          "samples": [
+            "quais os pix de hoje",
+            "quais pix eu recebi hoje",
+            "quais foram os pix de hoje",
+            "pix de hoje",
+            "quais pix de hoje"
+          ]
+        },
+        {
+          "name": "GetBalanceIntent",
+          "slots": [],
+          "samples": [
+            "qual o saldo da conta",
+            "qual o meu saldo",
+            "saldo da conta",
+            "qual o saldo",
+            "quanto eu tenho na conta",
+            "meu saldo"
+          ]
+        },
+        {
+          "name": "GetPixYesterdayIntent",
+          "slots": [],
+          "samples": [
+            "quantos pix tiveram ontem",
+            "quantos pix eu recebi ontem",
+            "quantidade de pix de ontem",
+            "quantos pix ontem",
+            "teve pix ontem",
+            "quantidade de pix ontem"
+          ]
+        },
+        {
+          "name": "GetPixIntent",
+          "slots": [
+            {
+              "name": "data",
+              "type": "AMAZON.DATE"
+            },
+            {
+              "name": "dia",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "detalhado",
+              "type": "TIPO_DETALHE"
+            }
+          ],
+          "samples": [
+            "quais os pix de {data}",
+            "quais pix eu recebi {data}",
+            "quais foram os pix de {data}",
+            "pix de {data}",
+            "como foram os pix de {data}",
+            "detalhe os pix de {data}",
+            "detalhar os pix de {data}",
+            "quais os pix do dia {dia}",
+            "quais pix eu recebi no dia {dia}",
+            "detalhe os pix do dia {dia}",
+            "pix do dia {dia}",
+            "detalhe os pix de hoje",
+            "detalhe os pix de ontem",
+            "quais os pix de hoje",
+            "quais os pix de ontem",
+            "como foram os pix de hoje",
+            "como foram os pix de ontem",
+            "detalhar os pix",
+            "detalhar",
+            "detalhes"
+          ]
+        },
+        {
+          "name": "GetPixSenderIntent",
+          "slots": [
+            {
+              "name": "valor",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "quem mandou o pix de {valor}",
+            "quem enviou o pix de {valor}",
+            "quem fez o pix de {valor}",
+            "quem mandou o pix de {valor} reais",
+            "quem me mandou o pix de {valor} reais",
+            "de quem é o pix de {valor}",
+            "de quem foi o pix de {valor} reais"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "TIPO_DETALHE",
+          "values": [
+            {
+              "name": {
+                "value": "detalhado",
+                "synonyms": [
+                  "detalhe",
+                  "detalhes",
+                  "completo",
+                  "detalhada",
+                  "especifique",
+                  "completa"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
