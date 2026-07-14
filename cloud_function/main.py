@@ -270,7 +270,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         speak_output = (
-            "Olá! Sou seu assistente de extrato bancário no Google Cloud. "
+            "Olá! Sou seu assistente de extrato bancário. "
             "Você pode me perguntar sobre seu saldo, os PIX de hoje, de ontem, ou quem enviou um PIX específico. "
             "Como posso ajudar?"
         )
@@ -294,10 +294,11 @@ class GetBalanceIntentHandler(AbstractRequestHandler):
             logger.error(f"Erro no GetBalanceIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar o seu saldo no extrato do Google Drive."
 
+        reprompt_text = "Deseja saber algo mais?"
         return (
             handler_input.response_builder
-                .speak(speak_output)
-                .set_should_end_session(True)
+                .speak(speak_output + " " + reprompt_text)
+                .ask(reprompt_text)
                 .response
         )
 
@@ -312,10 +313,11 @@ class GetPixTodayIntentHandler(AbstractRequestHandler):
             logger.error(f"Erro no GetPixTodayIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de hoje."
 
+        reprompt_text = "Deseja saber algo mais?"
         return (
             handler_input.response_builder
-                .speak(speak_output)
-                .set_should_end_session(True)
+                .speak(speak_output + " " + reprompt_text)
+                .ask(reprompt_text)
                 .response
         )
 
@@ -330,10 +332,11 @@ class GetPixYesterdayIntentHandler(AbstractRequestHandler):
             logger.error(f"Erro no GetPixYesterdayIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de ontem."
 
+        reprompt_text = "Deseja saber algo mais?"
         return (
             handler_input.response_builder
-                .speak(speak_output)
-                .set_should_end_session(True)
+                .speak(speak_output + " " + reprompt_text)
+                .ask(reprompt_text)
                 .response
         )
 
@@ -359,10 +362,11 @@ class GetPixIntentHandler(AbstractRequestHandler):
             logger.error(f"Erro no GetPixIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar as transações de PIX."
 
+        reprompt_text = "Deseja saber algo mais?"
         return (
             handler_input.response_builder
-                .speak(speak_output)
-                .set_should_end_session(True)
+                .speak(speak_output + " " + reprompt_text)
+                .ask(reprompt_text)
                 .response
         )
 
@@ -400,10 +404,11 @@ class GetPixSenderIntentHandler(AbstractRequestHandler):
             logger.error(f"Erro no GetPixSenderIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar o remetente do PIX."
 
+        reprompt_text = "Deseja saber algo mais?"
         return (
             handler_input.response_builder
-                .speak(speak_output)
-                .set_should_end_session(True)
+                .speak(speak_output + " " + reprompt_text)
+                .ask(reprompt_text)
                 .response
         )
 
@@ -434,6 +439,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
         return (
             handler_input.response_builder
                 .speak(speak_output)
+                .set_should_end_session(True)
                 .response
         )
 

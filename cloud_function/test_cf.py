@@ -125,27 +125,31 @@ def run_tests():
         # Converte a resposta em dicionário
         res_data = json.loads(response_body)
         
-        # Extrai a fala em SSML
+        # Extrai a fala em SSML e shouldEndSession
         output_ssml = res_data["response"]["outputSpeech"]["ssml"]
-        return output_ssml
+        should_end_session = res_data["response"].get("shouldEndSession", True)
+        return output_ssml, should_end_session
 
     # Teste 1: GetBalanceIntent
     print("\n--- Teste 1: Qual o saldo da conta? (GetBalanceIntent) ---")
-    ssml = call_alexa_cf("GetBalanceIntent")
+    ssml, should_end = call_alexa_cf("GetBalanceIntent")
     print(f"Fala Alexa: '{ssml}'")
     assert "1215,10" in ssml, f"Erro no saldo. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 2: GetPixTodayIntent
     print("\n--- Teste 2: Quais os pix de hoje? (GetPixTodayIntent) ---")
-    ssml = call_alexa_cf("GetPixTodayIntent")
+    ssml, should_end = call_alexa_cf("GetPixTodayIntent")
     print(f"Fala Alexa: '{ssml}'")
     assert "300,00" in ssml, f"Erro no PIX de hoje. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 3: GetPixYesterdayIntent
     print("\n--- Teste 3: Quantos pix ontem? (GetPixYesterdayIntent) ---")
-    ssml = call_alexa_cf("GetPixYesterdayIntent")
+    ssml, should_end = call_alexa_cf("GetPixYesterdayIntent")
     print(f"Fala Alexa: '{ssml}'")
     assert "recebeu 1 PIX" in ssml and "enviou 1 PIX" in ssml, f"Erro no PIX de ontem. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 4: GetPixSenderIntent (Valor R$ 150)
     print("\n--- Teste 4: Quem mandou o pix de R$ 150? (GetPixSenderIntent) ---")
@@ -156,9 +160,10 @@ def run_tests():
             "confirmationStatus": "NONE"
         }
     }
-    ssml = call_alexa_cf("GetPixSenderIntent", slots)
+    ssml, should_end = call_alexa_cf("GetPixSenderIntent", slots)
     print(f"Fala Alexa: '{ssml}'")
     assert "JOAO DA SILVA" in ssml, f"Erro no remetente. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 5: GetPixSenderIntent (Inexistente)
     print("\n--- Teste 5: Quem mandou o pix de R$ 999? (GetPixSenderIntent - Inexistente) ---")
@@ -169,9 +174,10 @@ def run_tests():
             "confirmationStatus": "NONE"
         }
     }
-    ssml = call_alexa_cf("GetPixSenderIntent", slots)
+    ssml, should_end = call_alexa_cf("GetPixSenderIntent", slots)
     print(f"Fala Alexa: '{ssml}'")
     assert "Não encontrei nenhum PIX" in ssml, f"Deveria avisar que não encontrou o PIX. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 6: GetPixIntent (Ontem - Recebidos)
     print("\n--- Teste 6: Quais os pix recebidos de ontem? (GetPixIntent - Recebidos) ---")
@@ -188,9 +194,10 @@ def run_tests():
             "value": "recebidos"
         }
     }
-    ssml = call_alexa_cf("GetPixIntent", slots)
+    ssml, should_end = call_alexa_cf("GetPixIntent", slots)
     print(f"Fala Alexa: '{ssml}'")
     assert "JOAO DA SILVA" in ssml and "recebeu" in ssml and "PEDRO PEREIRA" not in ssml, f"Erro nos PIX recebidos de ontem. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     # Teste 7: GetPixIntent (Ontem - Enviados)
     print("\n--- Teste 7: Quais os pix enviados de ontem? (GetPixIntent - Enviados) ---")
@@ -204,9 +211,17 @@ def run_tests():
             "value": "enviados"
         }
     }
-    ssml = call_alexa_cf("GetPixIntent", slots)
+    ssml, should_end = call_alexa_cf("GetPixIntent", slots)
     print(f"Fala Alexa: '{ssml}'")
     assert "PEDRO PEREIRA" in ssml and "enviou" in ssml and "JOAO DA SILVA" not in ssml, f"Erro nos PIX enviados de ontem. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
+
+    # Teste 8: AMAZON.StopIntent (Finalizar sessão)
+    print("\n--- Teste 8: Parar a Skill (AMAZON.StopIntent) ---")
+    ssml, should_end = call_alexa_cf("AMAZON.StopIntent")
+    print(f"Fala Alexa: '{ssml}'")
+    assert "Até logo!" in ssml, f"Erro ao parar a sessão. Fala: {ssml}"
+    assert should_end is True, f"Deveria encerrar a sessão. shouldEndSession: {should_end}"
 
     print("\n" + "="*45)
     print("TODOS OS TESTES DA CLOUD FUNCTION PASSARAM COM SUCESSO!")
