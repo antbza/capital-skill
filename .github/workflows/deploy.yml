@@ -31,3 +31,5 @@ jobs:
           env_vars: |
             DRIVE_FOLDER_ID=${{ secrets.DRIVE_FOLDER_ID }}
             GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}
+            ALEXA_SKILL_ID=${{ secrets.ALEXA_SKILL_ID }}
+

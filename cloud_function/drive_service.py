@@ -37,27 +37,25 @@ class GoogleDriveService:
 
     def get_latest_excel_file(self, folder_id):
         """
-        Busca o arquivo de extrato (.xlsx) mais recente em uma pasta específica do Google Drive.
+        Busca o arquivo de extrato (.xlsx, .xls ou .csv) mais recente em uma pasta específica do Google Drive.
         Retorna uma tupla (file_id, file_name).
         """
-        query = (
-            f"'{folder_id}' in parents and "
-            "mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and "
-            "trashed = false"
-        )
+        query = f"'{folder_id}' in parents and trashed = false"
         
         results = self.service.files().list(
             q=query,
             orderBy="modifiedTime desc",
-            pageSize=1,
+            pageSize=30,
             fields="files(id, name)"
         ).execute()
 
         files = results.get('files', [])
-        if not files:
-            raise FileNotFoundError(f"Nenhum arquivo XLSX encontrado na pasta do Drive com ID: {folder_id}")
+        for f in files:
+            name = f['name'].lower()
+            if name.endswith('.xlsx') or name.endswith('.xls') or name.endswith('.csv'):
+                return f['id'], f['name']
 
-        return files[0]['id'], files[0]['name']
+        raise FileNotFoundError(f"Nenhum arquivo XLSX, XLS ou CSV encontrado na pasta do Drive com ID: {folder_id}")
 
     def download_file(self, file_id):
         """

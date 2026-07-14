@@ -2,17 +2,71 @@ import datetime
 from openpyxl import load_workbook
 
 class ExcelParser:
-    def __init__(self, file_stream):
+    def __init__(self, file_stream, file_name=None):
         """
-        Inicializa o parser com o stream de bytes do arquivo XLSX.
+        Inicializa o parser com o stream de bytes do arquivo (XLSX, XLS ou CSV).
         """
-        self.wb = load_workbook(file_stream, data_only=True)
-        self.sheet = self.wb.active
+        self.rows = []
+        extension = "xlsx"  # fallback padrão se não puder determinar
+        if file_name:
+            ext_part = file_name.lower().split('.')[-1]
+            if ext_part in ["xlsx", "xls", "csv"]:
+                extension = ext_part
+
+        if extension == "xlsx":
+            self._load_xlsx(file_stream)
+        elif extension == "xls":
+            self._load_xls(file_stream)
+        elif extension == "csv":
+            self._load_csv(file_stream)
+
         self.transactions = self._parse_sheet()
+
+    def _load_xlsx(self, file_stream):
+        wb = load_workbook(file_stream, data_only=True)
+        sheet = wb.active
+        for row in sheet.iter_rows(values_only=True):
+            self.rows.append(list(row))
+
+    def _load_xls(self, file_stream):
+        import xlrd
+        wb = xlrd.open_workbook(file_contents=file_stream.read())
+        sheet = wb.sheet_by_index(0)
+        
+        for r in range(sheet.nrows):
+            row_values = []
+            for c in range(sheet.ncols):
+                cell = sheet.cell(r, c)
+                # Converte datas do Excel (formato numérico) para datetime.date
+                if cell.ctype == xlrd.XL_CELL_DATE:
+                    try:
+                        dt_tuple = xlrd.xldate_as_tuple(cell.value, wb.datemode)
+                        val = datetime.date(dt_tuple[0], dt_tuple[1], dt_tuple[2])
+                    except Exception:
+                        val = cell.value
+                else:
+                    val = cell.value
+                row_values.append(val)
+            self.rows.append(row_values)
+
+    def _load_csv(self, file_stream):
+        import csv
+        content = file_stream.read()
+        try:
+            decoded = content.decode('utf-8')
+        except UnicodeDecodeError:
+            decoded = content.decode('latin-1')
+            
+        # Detecta o delimitador (, ou ;) no primeiro bloco de caracteres
+        delimiter = ';' if ';' in decoded[:1000] else ','
+        
+        reader = csv.reader(decoded.splitlines(), delimiter=delimiter)
+        for row in reader:
+            self.rows.append(row)
 
     def _parse_sheet(self):
         """
-        Varre a planilha ativa, identifica as colunas pelo cabeçalho
+        Varre a lista de linhas unificada, identifica as colunas pelo cabeçalho
         e retorna uma lista de dicionários representando as transações.
         """
         transactions = []
@@ -31,10 +85,10 @@ class ExcelParser:
         header_row_index = None
 
         # Procura o cabeçalho nas primeiras 15 linhas (para pular possíveis cabeçalhos de banco)
-        for r in range(1, 16):
-            row_values = [str(cell.value).strip().lower() if cell.value is not None else "" for cell in self.sheet[r]]
+        for r in range(min(15, len(self.rows))):
+            row_values = [str(cell).strip().lower() if cell is not None else "" for cell in self.rows[r]]
             
-            # Se acharmos pelo menos 3 colunas esperadas na mesma linha, consideramos como o cabeçalho
+            # Se acharmos pelo menos 4 colunas esperadas na mesma linha, consideramos como o cabeçalho
             matches = 0
             temp_mapping = {}
             for col_key, aliases in expected_columns.items():
@@ -49,18 +103,21 @@ class ExcelParser:
                 header_row_index = r
                 break
 
-        if not header_row_index:
+        if header_row_index is None:
             # Fallback padrão se não encontrar: assume a primeira linha e as colunas padrão
             header_mapping = {
                 "data": 0, "lancamento": 1, "dcto": 2, "credito": 3, "debito": 4, "saldo": 5
             }
-            header_row_index = 1
+            header_row_index = 0
 
         # Iterar pelas linhas de transações abaixo do cabeçalho
-        for row in self.sheet.iter_rows(min_row=header_row_index + 1, values_only=True):
-            # Ignora linhas totalmente vazias ou onde a coluna Data está vazia
-            data_val = row[header_mapping["data"]] if "data" in header_mapping and header_mapping["data"] < len(row) else None
-            if data_val is None:
+        for row in self.rows[header_row_index + 1:]:
+            # Ignora linhas vazias ou onde a coluna Data está vazia
+            if not row or header_mapping["data"] >= len(row):
+                continue
+                
+            data_val = row[header_mapping["data"]]
+            if data_val is None or str(data_val).strip() == "":
                 continue
 
             trans_date = self._parse_date(data_val)

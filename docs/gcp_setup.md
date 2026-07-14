@@ -68,6 +68,8 @@ Acesse a página do seu repositório no GitHub (`https://github.com/antbza/capit
 1. **`GCP_SA_KEY`**: O conteúdo completo do arquivo JSON de credenciais da sua Service Account (`capital-502320-0389474aebac.json`).
 2. **`GOOGLE_CREDENTIALS`**: O JSON da sua Service Account codificado em Base64 ou texto plano (o mesmo valor que está no seu `.env` local).
 3. **`DRIVE_FOLDER_ID`**: O ID da pasta do Google Drive onde estão os arquivos de extrato.
+4. **`ALEXA_SKILL_ID`**: *(Opcional, recomendado para segurança)* O ID da sua Alexa Skill (ex: `amzn1.ask.skill.xxxx-xxxx`). Serve para a Cloud Function validar que a requisição partiu unicamente da sua Skill.
+
 
 ### Passo 2: Permissões Necessárias no GCP IAM
 A Service Account utilizada precisa dos seguintes papéis no GCP:

@@ -26,10 +26,10 @@ def get_parser():
     
     drive_service = GoogleDriveService()
     file_id, file_name = drive_service.get_latest_excel_file(folder_id)
-    logger.info(f"Arquivo XLSX de extrato localizado no Drive: {file_name} (ID: {file_id})")
+    logger.info(f"Arquivo de extrato localizado no Drive: {file_name} (ID: {file_id})")
     
     file_stream = drive_service.download_file(file_id)
-    return ExcelParser(file_stream)
+    return ExcelParser(file_stream, file_name)
 
 # --- Handlers da Alexa ---
 
@@ -261,6 +261,21 @@ def alexa_handler(request):
     request_json = request.get_json(silent=True)
     if not request_json:
         return "JSON Inválido", 400
+
+    # Valida o ID da Skill (se configurado nas variáveis de ambiente) para fins de segurança
+    allowed_skill_id = os.environ.get("ALEXA_SKILL_ID")
+    if allowed_skill_id:
+        req_skill_id = None
+        try:
+            req_skill_id = request_json.get("session", {}).get("application", {}).get("applicationId")
+            if not req_skill_id:
+                req_skill_id = request_json.get("context", {}).get("System", {}).get("application", {}).get("applicationId")
+        except Exception:
+            pass
+            
+        if req_skill_id != allowed_skill_id:
+            logger.warning(f"Chamada rejeitada: Skill ID incorreto ou ausente ({req_skill_id})")
+            return "Acesso Proibido", 403
 
     try:
         # Importante: O ask-sdk-core do Python espera um objeto RequestEnvelope do SDK
