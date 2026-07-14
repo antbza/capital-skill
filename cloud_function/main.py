@@ -31,6 +31,18 @@ def get_parser():
     file_stream = drive_service.download_file(file_id)
     return ExcelParser(file_stream, file_name)
 
+def format_brl(val):
+    return f"{float(val):.2f}".replace(".", ",")
+
+def clean_pix_name(name):
+    import re
+    cleaned = str(name).strip()
+    # Remove REM: e DES:
+    cleaned = re.sub(r'^(REM:|DES:)\s*', '', cleaned, flags=re.IGNORECASE).strip()
+    # Remove datas no final (ex: " 08/07", " 08/07/2026", " 08/07/26")
+    cleaned = re.sub(r'\s\d{2}/\d{2}(/\d{2,4})?$', '', cleaned).strip()
+    return cleaned
+
 def get_brasilia_today():
     import datetime
     utc_now = datetime.datetime.now(datetime.timezone.utc)
@@ -177,10 +189,11 @@ def execute_pix_query(data_val, dia_val, detalhado_val, operacao_val=None):
                             cleaned = cleaned[len(p):].strip()
                             break
                     
+                    cleaned_name = clean_pix_name(cleaned)
                     pix_list.append({
                         "tipo": tipo,
                         "valor": valor,
-                        "remetente": cleaned,
+                        "remetente": cleaned_name,
                         "hora": t.get("hora"),
                         "data": t["data"]
                     })
@@ -204,29 +217,29 @@ def execute_pix_query(data_val, dia_val, detalhado_val, operacao_val=None):
     
     if not quer_detalhes:
         if filter_tipo == "recebido":
-            speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {total_received:.2f}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
+            speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {format_brl(total_received)}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
         elif filter_tipo == "enviado":
-            speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {total_sent:.2f}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
+            speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {format_brl(total_sent)}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
         else:
             partes = []
             if count_received > 0:
-                partes.append(f"recebeu {count_received} PIX no total de R$ {total_received:.2f}")
+                partes.append(f"recebeu {count_received} PIX no total de R$ {format_brl(total_received)}")
             if count_sent > 0:
-                partes.append(f"enviou {count_sent} PIX no total de R$ {total_sent:.2f}")
+                partes.append(f"enviou {count_sent} PIX no total de R$ {format_brl(total_sent)}")
             speak_output = f"No período de {date_desc}, você " + " e ".join(partes) + ". Se quiser ouvir os detalhes de cada um, peça para detalhar."
     else:
         if len(pix_list) == 1:
             p = pix_list[0]
             time_desc = f" às {p['hora'].strftime('%H:%M')}" if p.get("hora") else ""
             if p["tipo"] == "recebido":
-                speak_output = f"Você recebeu um PIX de R$ {p['valor']:.2f} de {p['remetente']}{time_desc} {date_desc}."
+                speak_output = f"Você recebeu um PIX de R$ {format_brl(p['valor'])} de {p['remetente']}{time_desc} {date_desc}."
             else:
-                speak_output = f"Você enviou um PIX de R$ {p['valor']:.2f} para {p['remetente']}{time_desc} {date_desc}."
+                speak_output = f"Você enviou um PIX de R$ {format_brl(p['valor'])} para {p['remetente']}{time_desc} {date_desc}."
         else:
             if filter_tipo == "recebido":
-                speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {total_received:.2f}. "
+                speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {format_brl(total_received)}. "
             elif filter_tipo == "enviado":
-                speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {total_sent:.2f}. "
+                speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {format_brl(total_sent)}. "
             else:
                 partes_resumo = []
                 if count_received > 0:
@@ -234,24 +247,19 @@ def execute_pix_query(data_val, dia_val, detalhado_val, operacao_val=None):
                 if count_sent > 0:
                     partes_resumo.append(f"enviou {count_sent} PIX")
                 total_geral = sum(p['valor'] for p in pix_list)
-                speak_output = f"No período de {date_desc}, você " + " e ".join(partes_resumo) + f", totalizando R$ {total_geral:.2f}. "
+                speak_output = f"No período de {date_desc}, você " + " e ".join(partes_resumo) + f", totalizando R$ {format_brl(total_geral)}. "
                 
             detalhes = []
             for p in pix_list:
                 time_desc = f" às {p['hora'].strftime('%H:%M')}" if p.get("hora") else ""
                 day_desc = f" no dia {p['data'].strftime('%d/%m')}" if is_range else ""
-                if filter_tipo == "recebido":
-                    detalhes.append(f"um de R$ {p['valor']:.2f} de {p['remetente']}{time_desc}{day_desc}")
-                elif filter_tipo == "enviado":
-                    detalhes.append(f"um de R$ {p['valor']:.2f} para {p['remetente']}{time_desc}{day_desc}")
+                if p["tipo"] == "recebido":
+                    detalhes.append(f"um recebido de R$ {format_brl(p['valor'])} de {p['remetente']}{time_desc}{day_desc}")
                 else:
-                    if p["tipo"] == "recebido":
-                        detalhes.append(f"um recebido de R$ {p['valor']:.2f} de {p['remetente']}{time_desc}{day_desc}")
-                    else:
-                        detalhes.append(f"um enviado de R$ {p['valor']:.2f} para {p['remetente']}{time_desc}{day_desc}")
-            speak_output += "Os lançamentos foram: " + " e ".join(detalhes) + "."
+                    detalhes.append(f"um enviado de R$ {format_brl(p['valor'])} para {p['remetente']}{time_desc}{day_desc}")
+            speak_output += "Os lançamentos foram: " + ", ".join(detalhes) + "."
             
-    return speak_output.replace(".", ",")
+    return speak_output
 
 
 # --- Handlers da Alexa ---
@@ -281,8 +289,7 @@ class GetBalanceIntentHandler(AbstractRequestHandler):
         try:
             parser = get_parser()
             balance = parser.get_balance()
-            speak_output = f"O saldo atual da sua conta é de R$ {balance:.2f}."
-            speak_output = speak_output.replace(".", ",")
+            speak_output = f"O saldo atual da sua conta é de R$ {format_brl(balance)}."
         except Exception as e:
             logger.error(f"Erro no GetBalanceIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar o seu saldo no extrato do Google Drive."
@@ -382,14 +389,13 @@ class GetPixSenderIntentHandler(AbstractRequestHandler):
             sender_info = parser.find_pix_sender(valor)
             
             if not sender_info:
-                speak_output = f"Não encontrei nenhum PIX recebido no valor de R$ {valor:.2f}."
+                speak_output = f"Não encontrei nenhum PIX recebido no valor de R$ {format_brl(valor)}."
             else:
+                remetente_cleaned = clean_pix_name(sender_info['remetente'])
                 speak_output = (
-                    f"O PIX de R$ {sender_info['valor']:.2f} foi enviado por "
-                    f"{sender_info['remetente']} no dia {sender_info['data']}."
+                    f"O PIX de R$ {format_brl(sender_info['valor'])} foi enviado por "
+                    f"{remetente_cleaned} no dia {sender_info['data']}."
                 )
-            
-            speak_output = speak_output.replace(".", ",")
         except Exception as e:
             logger.error(f"Erro no GetPixSenderIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar o remetente do PIX."
