@@ -43,6 +43,14 @@ def generate_test_xlsx(filepath):
     ws.append([today.strftime("%d/%m/%Y"), "PIX RECEBIDO - ANA LUIZA SOUZA", "555666", 300.00, 0.0, 1230.10])
     ws.append([today.strftime("%d/%m/%Y"), "COMPRA PADARIA PÃO QUENTE", "777888", 0.0, 15.00, 1215.10])
 
+    # 5. Adiciona a tabela "Saldos Invest Fácil / Plus" no final para simular o cenário real
+    ws.append([])
+    ws.append([])
+    ws.append(["Saldos Invest Fácil / Plus", "", "", "", "", ""])
+    ws.append([])
+    ws.append(["Data", "Histórico", "Valor (R$)", "", "", ""])
+    ws.append([today.strftime("%d/%m/%Y"), "SALDO INVEST FÁCIL", "10.000,00", "", "", ""])
+
     wb.save(filepath)
     print(f"Planilha de teste local gerada com sucesso em: {filepath}")
 
@@ -105,6 +113,11 @@ def run_tests():
             return ExcelParser(f, xlsx_path)
             
     main.get_parser = mock_get_parser
+
+    # Obter data hoje de Brasília para uso nos asserts dos testes
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    brasilia_offset = datetime.timezone(datetime.timedelta(hours=-3))
+    today = utc_now.astimezone(brasilia_offset).date()
 
     print("\n" + "="*45)
     print("INICIANDO TESTES DO GOOGLE CLOUD FUNCTION")
@@ -257,6 +270,33 @@ def run_tests():
     assert "JOAO DA SILVA" in ssml and "PEDRO PEREIRA" in ssml, f"Deveria detalhar os PIX de ontem. Fala: {ssml}"
     assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
     assert session_attr.get("last_data") == "yesterday", f"Deveria manter o last_data como 'yesterday'. Atributos: {session_attr}"
+
+    # Teste 10: GetBalanceIntent com data específica (ontem)
+    print("\n--- Teste 10: Qual o saldo de ontem? (GetBalanceIntent) ---")
+    slots_balance_yest = {
+        "data": {
+            "name": "data",
+            "value": "yesterday"
+        }
+    }
+    ssml, should_end, session_attr = call_alexa_cf("GetBalanceIntent", slots_balance_yest)
+    print(f"Fala Alexa: '{ssml}'")
+    assert "930,10" in ssml, f"Erro no saldo de ontem. Fala: {ssml}"
+    assert "ontem" in ssml, f"Deveria indicar que o saldo era de ontem. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
+
+    # Teste 11: GetBalanceIntent com dia específico (hoje)
+    print("\n--- Teste 11: Qual o saldo do dia de hoje? (GetBalanceIntent) ---")
+    slots_balance_today = {
+        "dia": {
+            "name": "dia",
+            "value": str(today.day)
+        }
+    }
+    ssml, should_end, session_attr = call_alexa_cf("GetBalanceIntent", slots_balance_today)
+    print(f"Fala Alexa: '{ssml}'")
+    assert "1215,10" in ssml, f"Erro no saldo do dia de hoje. Fala: {ssml}"
+    assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
     print("\n" + "="*45)
     print("TODOS OS TESTES DA CLOUD FUNCTION PASSARAM COM SUCESSO!")

@@ -120,6 +120,11 @@ class ExcelParser:
             if data_val is None or str(data_val).strip() == "":
                 continue
 
+            # Interrompe o parse se encontrar o cabeçalho da tabela de Saldos Invest Fácil / Plus
+            data_val_str = str(data_val).strip().lower()
+            if "saldos invest" in data_val_str or "invest fácil" in data_val_str or "invest facil" in data_val_str:
+                break
+
             trans_date = self._parse_date(data_val)
             if not trans_date:
                 continue  # Pula se a data for inválida (pode ser uma linha de rodapé)
@@ -135,7 +140,13 @@ class ExcelParser:
             # Mapear crédito, débito e saldo
             credito = self._parse_float(row[header_mapping["credito"]]) if "credito" in header_mapping and header_mapping["credito"] < len(row) else 0.0
             debito = self._parse_float(row[header_mapping["debito"]]) if "debito" in header_mapping and header_mapping["debito"] < len(row) else 0.0
-            saldo = self._parse_float(row[header_mapping["saldo"]]) if "saldo" in header_mapping and header_mapping["saldo"] < len(row) else None
+            
+            # Mapeia saldo como None se a célula correspondente estiver vazia
+            saldo_val = row[header_mapping["saldo"]] if "saldo" in header_mapping and header_mapping["saldo"] < len(row) else None
+            if saldo_val is None or str(saldo_val).strip() == "":
+                saldo = None
+            else:
+                saldo = self._parse_float(saldo_val)
 
             transactions.append({
                 "data": trans_date,
@@ -238,6 +249,21 @@ class ExcelParser:
             if t["saldo"] is not None:
                 return t["saldo"]
         return 0.0
+
+    def get_balance_on_date(self, target_date):
+        """
+        Retorna o saldo da conta na data especificada (fim do dia).
+        Se não houver transações na data, retorna o saldo da última transação anterior à data.
+        """
+        last_balance = 0.0
+        # transactions is sorted by date ascending
+        for t in self.transactions:
+            if t["data"] <= target_date:
+                if t["saldo"] is not None:
+                    last_balance = t["saldo"]
+            else:
+                break
+        return last_balance
 
     def get_yesterday_pix_summary(self):
         """

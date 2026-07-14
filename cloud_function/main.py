@@ -287,9 +287,23 @@ class GetBalanceIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         try:
+            slots = handler_input.request_envelope.request.intent.slots
+            data_slot = slots.get("data") if slots else None
+            dia_slot = slots.get("dia") if slots else None
+            
+            data_val = data_slot.value if data_slot else None
+            dia_val = dia_slot.value if dia_slot else None
+
             parser = get_parser()
-            balance = parser.get_balance()
-            speak_output = f"O saldo atual da sua conta é de R$ {format_brl(balance)}."
+
+            if data_val or dia_val:
+                start_date, end_date, is_range, date_desc = resolve_target_date(data_val, dia_val)
+                # Consulta o saldo na data resolvida (fim do dia correspondente)
+                balance = parser.get_balance_on_date(end_date)
+                speak_output = f"O saldo da sua conta {date_desc} era de R$ {format_brl(balance)}."
+            else:
+                balance = parser.get_balance()
+                speak_output = f"O saldo atual da sua conta é de R$ {format_brl(balance)}."
         except Exception as e:
             logger.error(f"Erro no GetBalanceIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar o seu saldo no extrato do Google Drive."
