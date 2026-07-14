@@ -309,6 +309,13 @@ class GetPixTodayIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         try:
             speak_output = execute_pix_query("today", None, None)
+            
+            # Salva o contexto na sessão
+            session_attr = handler_input.attributes_manager.session_attributes
+            session_attr["last_data"] = "today"
+            session_attr["last_dia"] = None
+            session_attr["last_operacao"] = None
+            handler_input.attributes_manager.session_attributes = session_attr
         except Exception as e:
             logger.error(f"Erro no GetPixTodayIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de hoje."
@@ -328,6 +335,13 @@ class GetPixYesterdayIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         try:
             speak_output = execute_pix_query("yesterday", None, None)
+            
+            # Salva o contexto na sessão
+            session_attr = handler_input.attributes_manager.session_attributes
+            session_attr["last_data"] = "yesterday"
+            session_attr["last_dia"] = None
+            session_attr["last_operacao"] = None
+            handler_input.attributes_manager.session_attributes = session_attr
         except Exception as e:
             logger.error(f"Erro no GetPixYesterdayIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de ontem."
@@ -357,7 +371,21 @@ class GetPixIntentHandler(AbstractRequestHandler):
             detalhado_val = detalhado_slot.value if detalhado_slot else None
             operacao_val = operacao_slot.value if operacao_slot else None
             
+            # Restaura contexto da sessão se não informou data/dia nesta iteração
+            session_attr = handler_input.attributes_manager.session_attributes
+            if not data_val and not dia_val:
+                data_val = session_attr.get("last_data")
+                dia_val = session_attr.get("last_dia")
+                if not operacao_val:
+                    operacao_val = session_attr.get("last_operacao")
+            
             speak_output = execute_pix_query(data_val, dia_val, detalhado_val, operacao_val)
+            
+            # Salva o novo contexto na sessão
+            session_attr["last_data"] = data_val
+            session_attr["last_dia"] = dia_val
+            session_attr["last_operacao"] = operacao_val
+            handler_input.attributes_manager.session_attributes = session_attr
         except Exception as e:
             logger.error(f"Erro no GetPixIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar as transações de PIX."
