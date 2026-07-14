@@ -141,16 +141,28 @@ def run_tests():
     assert "1215,10" in ssml, f"Erro no saldo. Fala: {ssml}"
     assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
-    # Teste 2: GetPixTodayIntent
-    print("\n--- Teste 2: Quais os pix de hoje? (GetPixTodayIntent) ---")
-    ssml, should_end, session_attr = call_alexa_cf("GetPixTodayIntent")
+    # Teste 2: GetPixIntent (Hoje)
+    print("\n--- Teste 2: Quais os pix de hoje? (GetPixIntent - Hoje) ---")
+    slots_today = {
+        "data": {
+            "name": "data",
+            "value": "today"
+        }
+    }
+    ssml, should_end, session_attr = call_alexa_cf("GetPixIntent", slots_today)
     print(f"Fala Alexa: '{ssml}'")
     assert "300,00" in ssml, f"Erro no PIX de hoje. Fala: {ssml}"
     assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"
 
-    # Teste 3: GetPixYesterdayIntent
-    print("\n--- Teste 3: Quantos pix ontem? (GetPixYesterdayIntent) ---")
-    ssml, should_end, session_attr = call_alexa_cf("GetPixYesterdayIntent")
+    # Teste 3: GetPixIntent (Ontem)
+    print("\n--- Teste 3: Quantos pix ontem? (GetPixIntent - Ontem) ---")
+    slots_yesterday = {
+        "data": {
+            "name": "data",
+            "value": "yesterday"
+        }
+    }
+    ssml, should_end, session_attr = call_alexa_cf("GetPixIntent", slots_yesterday)
     print(f"Fala Alexa: '{ssml}'")
     assert "recebeu 1 PIX" in ssml and "enviou 1 PIX" in ssml, f"Erro no PIX de ontem. Fala: {ssml}"
     assert should_end is False, f"Deveria manter a sessão aberta. shouldEndSession: {should_end}"

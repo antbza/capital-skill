@@ -20,17 +20,6 @@
           "samples": []
         },
         {
-          "name": "GetPixTodayIntent",
-          "slots": [],
-          "samples": [
-            "quais os pix de hoje",
-            "quais pix eu recebi hoje",
-            "quais foram os pix de hoje",
-            "pix de hoje",
-            "quais pix de hoje"
-          ]
-        },
-        {
           "name": "GetBalanceIntent",
           "slots": [],
           "samples": [
@@ -40,18 +29,6 @@
             "qual o saldo",
             "quanto eu tenho na conta",
             "meu saldo"
-          ]
-        },
-        {
-          "name": "GetPixYesterdayIntent",
-          "slots": [],
-          "samples": [
-            "quantos pix tiveram ontem",
-            "quantos pix eu recebi ontem",
-            "quantidade de pix de ontem",
-            "quantos pix ontem",
-            "teve pix ontem",
-            "quantidade de pix ontem"
           ]
         },
         {
@@ -98,7 +75,14 @@
             "{detalhado} os pix {operacao} de {data}",
             "{detalhado} os pix {operacao} do dia {dia}",
             "{detalhado} os {operacao} de {data}",
-            "{detalhado} os {operacao} do dia {dia}"
+            "{detalhado} os {operacao} do dia {dia}",
+            "quais pix de {data}",
+            "quantos pix tiveram {data}",
+            "quantos pix eu recebi {data}",
+            "quantidade de pix de {data}",
+            "quantos pix {data}",
+            "teve pix {data}",
+            "quantidade de pix {data}"
           ]
         },
         {

@@ -302,57 +302,7 @@ class GetBalanceIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-class GetPixTodayIntentHandler(AbstractRequestHandler):
-    def can_handle(self, handler_input):
-        return is_intent_name("GetPixTodayIntent")(handler_input)
 
-    def handle(self, handler_input):
-        try:
-            speak_output = execute_pix_query("today", None, None)
-            
-            # Salva o contexto na sessão
-            session_attr = handler_input.attributes_manager.session_attributes
-            session_attr["last_data"] = "today"
-            session_attr["last_dia"] = None
-            session_attr["last_operacao"] = None
-            handler_input.attributes_manager.session_attributes = session_attr
-        except Exception as e:
-            logger.error(f"Erro no GetPixTodayIntent: {e}", exc_info=True)
-            speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de hoje."
-
-        reprompt_text = "Deseja saber algo mais?"
-        return (
-            handler_input.response_builder
-                .speak(speak_output + " " + reprompt_text)
-                .ask(reprompt_text)
-                .response
-        )
-
-class GetPixYesterdayIntentHandler(AbstractRequestHandler):
-    def can_handle(self, handler_input):
-        return is_intent_name("GetPixYesterdayIntent")(handler_input)
-
-    def handle(self, handler_input):
-        try:
-            speak_output = execute_pix_query("yesterday", None, None)
-            
-            # Salva o contexto na sessão
-            session_attr = handler_input.attributes_manager.session_attributes
-            session_attr["last_data"] = "yesterday"
-            session_attr["last_dia"] = None
-            session_attr["last_operacao"] = None
-            handler_input.attributes_manager.session_attributes = session_attr
-        except Exception as e:
-            logger.error(f"Erro no GetPixYesterdayIntent: {e}", exc_info=True)
-            speak_output = "Desculpe, ocorreu um erro ao consultar os PIX de ontem."
-
-        reprompt_text = "Deseja saber algo mais?"
-        return (
-            handler_input.response_builder
-                .speak(speak_output + " " + reprompt_text)
-                .ask(reprompt_text)
-                .response
-        )
 
 class GetPixIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
@@ -498,8 +448,6 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 sb = SkillBuilder()
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(GetBalanceIntentHandler())
-sb.add_request_handler(GetPixTodayIntentHandler())
-sb.add_request_handler(GetPixYesterdayIntentHandler())
 sb.add_request_handler(GetPixIntentHandler())
 sb.add_request_handler(GetPixSenderIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
