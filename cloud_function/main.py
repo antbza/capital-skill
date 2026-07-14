@@ -119,10 +119,19 @@ def resolve_target_date(data_slot_value, dia_slot_value):
     # Fallback padrão: hoje
     return today, today, False, "hoje"
 
-def execute_pix_query(data_val, dia_val, detalhado_val):
+def execute_pix_query(data_val, dia_val, detalhado_val, operacao_val=None):
     start_date, end_date, is_range, date_desc = resolve_target_date(data_val, dia_val)
     parser = get_parser()
     
+    # Resolve tipo de operação
+    filter_tipo = None
+    if operacao_val:
+        op = str(operacao_val).lower()
+        if any(w in op for w in ["receb", "entrad", "cred", "créd", "ganh"]):
+            filter_tipo = "recebido"
+        elif any(w in op for w in ["envi", "said", "saíd", "deb", "déb", "pag", "gast"]):
+            filter_tipo = "enviado"
+            
     pix_list = []
     count_received = 0
     total_received = 0.0
@@ -138,15 +147,21 @@ def execute_pix_query(data_val, dia_val, detalhado_val):
                 if t["credito"] > 0:
                     tipo = "recebido"
                     valor = t["credito"]
-                    count_received += 1
-                    total_received += valor
                 elif t["debito"] > 0:
                     tipo = "enviado"
                     valor = t["debito"]
-                    count_sent += 1
-                    total_sent += valor
                 
                 if tipo:
+                    if filter_tipo and tipo != filter_tipo:
+                        continue
+                        
+                    if tipo == "recebido":
+                        count_received += 1
+                        total_received += valor
+                    else:
+                        count_sent += 1
+                        total_sent += valor
+                        
                     orig_desc = t["lancamento"]
                     cleaned = orig_desc
                     prefixes = [
@@ -171,7 +186,12 @@ def execute_pix_query(data_val, dia_val, detalhado_val):
                     })
                     
     if not pix_list:
-        return f"Você não teve nenhuma transação por PIX {date_desc}."
+        if filter_tipo == "recebido":
+            return f"Você não recebeu nenhum PIX {date_desc}."
+        elif filter_tipo == "enviado":
+            return f"Você não enviou nenhum PIX {date_desc}."
+        else:
+            return f"Você não teve nenhuma transação por PIX {date_desc}."
         
     # Verifica se quer detalhado (se explicitou ou se o resultado é menor/igual a 5 itens)
     forcar_detalhado = False
@@ -183,13 +203,17 @@ def execute_pix_query(data_val, dia_val, detalhado_val):
     quer_detalhes = forcar_detalhado or (len(pix_list) <= 5)
     
     if not quer_detalhes:
-        partes = []
-        if count_received > 0:
-            partes.append(f"recebeu {count_received} PIX no total de R$ {total_received:.2f}")
-        if count_sent > 0:
-            partes.append(f"enviou {count_sent} PIX no total de R$ {total_sent:.2f}")
-        
-        speak_output = f"No período de {date_desc}, você " + " e ".join(partes) + ". Se quiser ouvir os detalhes de cada um, peça para detalhar."
+        if filter_tipo == "recebido":
+            speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {total_received:.2f}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
+        elif filter_tipo == "enviado":
+            speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {total_sent:.2f}. Se quiser ouvir os detalhes de cada um, peça para detalhar."
+        else:
+            partes = []
+            if count_received > 0:
+                partes.append(f"recebeu {count_received} PIX no total de R$ {total_received:.2f}")
+            if count_sent > 0:
+                partes.append(f"enviou {count_sent} PIX no total de R$ {total_sent:.2f}")
+            speak_output = f"No período de {date_desc}, você " + " e ".join(partes) + ". Se quiser ouvir os detalhes de cada um, peça para detalhar."
     else:
         if len(pix_list) == 1:
             p = pix_list[0]
@@ -199,22 +223,32 @@ def execute_pix_query(data_val, dia_val, detalhado_val):
             else:
                 speak_output = f"Você enviou um PIX de R$ {p['valor']:.2f} para {p['remetente']}{time_desc} {date_desc}."
         else:
-            partes_resumo = []
-            if count_received > 0:
-                partes_resumo.append(f"recebeu {count_received} PIX")
-            if count_sent > 0:
-                partes_resumo.append(f"enviou {count_sent} PIX")
+            if filter_tipo == "recebido":
+                speak_output = f"No período de {date_desc}, você recebeu {count_received} PIX, totalizando R$ {total_received:.2f}. "
+            elif filter_tipo == "enviado":
+                speak_output = f"No período de {date_desc}, você enviou {count_sent} PIX, totalizando R$ {total_sent:.2f}. "
+            else:
+                partes_resumo = []
+                if count_received > 0:
+                    partes_resumo.append(f"recebeu {count_received} PIX")
+                if count_sent > 0:
+                    partes_resumo.append(f"enviou {count_sent} PIX")
+                total_geral = sum(p['valor'] for p in pix_list)
+                speak_output = f"No período de {date_desc}, você " + " e ".join(partes_resumo) + f", totalizando R$ {total_geral:.2f}. "
                 
-            total_geral = sum(p['valor'] for p in pix_list)
-            speak_output = f"No período de {date_desc}, você " + " e ".join(partes_resumo) + f", totalizando R$ {total_geral:.2f}. "
             detalhes = []
             for p in pix_list:
                 time_desc = f" às {p['hora'].strftime('%H:%M')}" if p.get("hora") else ""
                 day_desc = f" no dia {p['data'].strftime('%d/%m')}" if is_range else ""
-                if p["tipo"] == "recebido":
-                    detalhes.append(f"um recebido de R$ {p['valor']:.2f} de {p['remetente']}{time_desc}{day_desc}")
+                if filter_tipo == "recebido":
+                    detalhes.append(f"um de R$ {p['valor']:.2f} de {p['remetente']}{time_desc}{day_desc}")
+                elif filter_tipo == "enviado":
+                    detalhes.append(f"um de R$ {p['valor']:.2f} para {p['remetente']}{time_desc}{day_desc}")
                 else:
-                    detalhes.append(f"um enviado de R$ {p['valor']:.2f} para {p['remetente']}{time_desc}{day_desc}")
+                    if p["tipo"] == "recebido":
+                        detalhes.append(f"um recebido de R$ {p['valor']:.2f} de {p['remetente']}{time_desc}{day_desc}")
+                    else:
+                        detalhes.append(f"um enviado de R$ {p['valor']:.2f} para {p['remetente']}{time_desc}{day_desc}")
             speak_output += "Os lançamentos foram: " + " e ".join(detalhes) + "."
             
     return speak_output.replace(".", ",")
@@ -306,12 +340,14 @@ class GetPixIntentHandler(AbstractRequestHandler):
             data_slot = slots.get("data")
             dia_slot = slots.get("dia")
             detalhado_slot = slots.get("detalhado")
+            operacao_slot = slots.get("operacao")
             
             data_val = data_slot.value if data_slot else None
             dia_val = dia_slot.value if dia_slot else None
             detalhado_val = detalhado_slot.value if detalhado_slot else None
+            operacao_val = operacao_slot.value if operacao_slot else None
             
-            speak_output = execute_pix_query(data_val, dia_val, detalhado_val)
+            speak_output = execute_pix_query(data_val, dia_val, detalhado_val, operacao_val)
         except Exception as e:
             logger.error(f"Erro no GetPixIntent: {e}", exc_info=True)
             speak_output = "Desculpe, ocorreu um erro ao consultar as transações de PIX."

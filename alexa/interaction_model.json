@@ -68,6 +68,10 @@
             {
               "name": "detalhado",
               "type": "TIPO_DETALHE"
+            },
+            {
+              "name": "operacao",
+              "type": "TIPO_OPERACAO"
             }
           ],
           "samples": [
@@ -90,7 +94,23 @@
             "como foram os pix de ontem",
             "detalhar os pix",
             "detalhar",
-            "detalhes"
+            "detalhes",
+            "quais os pix {operacao} de {data}",
+            "quais os pix {operacao} do dia {dia}",
+            "quais os {operacao} de {data}",
+            "quais os {operacao} do dia {dia}",
+            "quais pix {operacao} de {data}",
+            "quais pix {operacao} do dia {dia}",
+            "pix {operacao} de {data}",
+            "pix {operacao} do dia {dia}",
+            "detalhe os pix {operacao} de {data}",
+            "detalhe os pix {operacao} do dia {dia}",
+            "detalhe os {operacao} de {data}",
+            "detalhe os {operacao} do dia {dia}",
+            "quais os pix {operacao} de hoje",
+            "quais os pix {operacao} de ontem",
+            "detalhe os pix {operacao} de hoje",
+            "detalhe os pix {operacao} de ontem"
           ]
         },
         {
@@ -126,6 +146,47 @@
                   "detalhada",
                   "especifique",
                   "completa"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TIPO_OPERACAO",
+          "values": [
+            {
+              "name": {
+                "value": "recebido",
+                "synonyms": [
+                  "recebidos",
+                  "recebido",
+                  "entrada",
+                  "entradas",
+                  "crédito",
+                  "créditos",
+                  "ganho",
+                  "ganhos",
+                  "recebi",
+                  "recebidas"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "enviado",
+                "synonyms": [
+                  "enviados",
+                  "enviado",
+                  "saída",
+                  "saídas",
+                  "débito",
+                  "débitos",
+                  "pago",
+                  "pagos",
+                  "enviei",
+                  "gastos",
+                  "gastei",
+                  "enviadas"
                 ]
               }
             }

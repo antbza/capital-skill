@@ -99,7 +99,7 @@ def run_tests():
     # Monkey Patching para fazer o main.get_parser ler o arquivo XLSX local
     def mock_get_parser():
         with open(xlsx_path, "rb") as f:
-            return ExcelParser(f)
+            return ExcelParser(f, xlsx_path)
             
     main.get_parser = mock_get_parser
 
@@ -172,6 +172,41 @@ def run_tests():
     ssml = call_alexa_cf("GetPixSenderIntent", slots)
     print(f"Fala Alexa: '{ssml}'")
     assert "Não encontrei nenhum PIX" in ssml, f"Deveria avisar que não encontrou o PIX. Fala: {ssml}"
+
+    # Teste 6: GetPixIntent (Ontem - Recebidos)
+    print("\n--- Teste 6: Quais os pix recebidos de ontem? (GetPixIntent - Recebidos) ---")
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    brasilia_offset = datetime.timezone(datetime.timedelta(hours=-3))
+    yesterday = utc_now.astimezone(brasilia_offset).date() - datetime.timedelta(days=1)
+    slots = {
+        "data": {
+            "name": "data",
+            "value": yesterday.strftime("%Y-%m-%d")
+        },
+        "operacao": {
+            "name": "operacao",
+            "value": "recebidos"
+        }
+    }
+    ssml = call_alexa_cf("GetPixIntent", slots)
+    print(f"Fala Alexa: '{ssml}'")
+    assert "JOAO DA SILVA" in ssml and "recebeu" in ssml and "PEDRO PEREIRA" not in ssml, f"Erro nos PIX recebidos de ontem. Fala: {ssml}"
+
+    # Teste 7: GetPixIntent (Ontem - Enviados)
+    print("\n--- Teste 7: Quais os pix enviados de ontem? (GetPixIntent - Enviados) ---")
+    slots = {
+        "data": {
+            "name": "data",
+            "value": yesterday.strftime("%Y-%m-%d")
+        },
+        "operacao": {
+            "name": "operacao",
+            "value": "enviados"
+        }
+    }
+    ssml = call_alexa_cf("GetPixIntent", slots)
+    print(f"Fala Alexa: '{ssml}'")
+    assert "PEDRO PEREIRA" in ssml and "enviou" in ssml and "JOAO DA SILVA" not in ssml, f"Erro nos PIX enviados de ontem. Fala: {ssml}"
 
     print("\n" + "="*45)
     print("TODOS OS TESTES DA CLOUD FUNCTION PASSARAM COM SUCESSO!")
