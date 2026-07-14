@@ -139,7 +139,7 @@ class ExcelParser:
 
             # Mapear crédito, débito e saldo
             credito = self._parse_float(row[header_mapping["credito"]]) if "credito" in header_mapping and header_mapping["credito"] < len(row) else 0.0
-            debito = self._parse_float(row[header_mapping["debito"]]) if "debito" in header_mapping and header_mapping["debito"] < len(row) else 0.0
+            debito = abs(self._parse_float(row[header_mapping["debito"]])) if "debito" in header_mapping and header_mapping["debito"] < len(row) else 0.0
             
             # Mapeia saldo como None se a célula correspondente estiver vazia
             saldo_val = row[header_mapping["saldo"]] if "saldo" in header_mapping and header_mapping["saldo"] < len(row) else None

@@ -36,7 +36,7 @@ def generate_test_xlsx(filepath):
 
     # 3. Transações de ontem
     ws.append([yesterday.strftime("%d/%m/%Y"), "PIX RECEBIDO - JOAO DA SILVA", "111222", 150.00, 0.0, 1000.00])
-    ws.append([yesterday.strftime("%d/%m/%Y"), "PIX ENVIADO - PEDRO PEREIRA", "333444", 0.0, 50.00, 950.00])
+    ws.append([yesterday.strftime("%d/%m/%Y"), "PIX ENVIADO - PEDRO PEREIRA", "333444", 0.0, -50.00, 950.00])
     ws.append([yesterday.strftime("%d/%m/%Y"), "TARIFA MENSALIDADE", "999999", 0.0, 19.90, 930.10])
 
     # 4. Transações de hoje

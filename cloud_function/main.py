@@ -159,9 +159,9 @@ def execute_pix_query(data_val, dia_val, detalhado_val, operacao_val=None):
                 if t["credito"] > 0:
                     tipo = "recebido"
                     valor = t["credito"]
-                elif t["debito"] > 0:
+                elif t["debito"] > 0 or t["debito"] < 0:
                     tipo = "enviado"
-                    valor = t["debito"]
+                    valor = abs(t["debito"])
                 
                 if tipo:
                     if filter_tipo and tipo != filter_tipo:
